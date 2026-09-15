@@ -19,7 +19,7 @@ services:
       - fcg-network
 
   kong-migration:
-    image: kong:3.3-alpine
+    image: kong:latest
     command: kong migrations bootstrap
     depends_on:
       kong-database:
@@ -33,7 +33,7 @@ services:
       - fcg-network
 
   kong:
-    image: kong:3.3-alpine
+    image: kong:latest
     ports:
       - "8000:8000"
       - "8443:8443"
