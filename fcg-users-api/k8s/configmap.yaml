@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: users-api-config
+  namespace: default
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  Jwt__Issuer: "FiapCloudGames"
+  Jwt__Audience: "FiapCloudGamesUsers"
+  Jwt__ExpirationHours: "8"
+  RabbitMQ__Host: "rabbitmq-service"
+  RabbitMQ__Username: "guest"
