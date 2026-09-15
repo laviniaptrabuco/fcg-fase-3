@@ -1,3 +1,0 @@
-datasources:
-  - name: Prometheus
-    type: prometheus
