@@ -24,12 +24,15 @@ Azure Function (NotificationsAPI - Serverless)
 ## 🚀 Quick Start
 
 ```bash
-# Clonar repositório com submodules
-git clone --recursive https://github.com/laviniaptrabuco/fcg-fase-3.git
+# Clonar repositório
+git clone https://github.com/laviniaptrabuco/fcg-fase-3.git
 cd fcg-fase-3
 
-# Iniciar todos os serviços
+# Iniciar infraestrutura (Kong, Prometheus, Grafana, MongoDB, Redis, RabbitMQ)
 docker-compose up -d
+
+# Configurar Kong routes automaticamente
+bash fcg-api-gateway/setup-routes.sh
 
 # Verificar status
 docker-compose ps
@@ -108,13 +111,36 @@ public async Task Run([QueueTrigger("notifications")] string message)
 }
 ```
 
-## 📝 Microserviços
+## 📝 Microsserviços (Fase 2 → Fase 3)
 
-- **fcg-users-api**: Autenticação JWT + MongoDB cache Redis
-- **fcg-catalog-api**: Catálogo + busca com filtros
-- **fcg-payments-api**: Processamento de pagamentos
-- **fcg-orchestration**: Orquestração de fluxos
-- **fcg-notifications-serverless**: Azure Function serverless
+**Fase 3 atualiza os microsserviços da Fase 2 com:**
+
+- **fcg-users-api**: Autenticação JWT + MongoDB + Redis cache
+  - Repo: https://github.com/laviniaptrabuco/fcg-users-api
+  - Status: Atualizado para Fase 3
+
+- **fcg-catalog-api**: Catálogo + busca com MongoDB + Redis cache
+  - Repo: https://github.com/laviniaptrabuco/fcg-catalog-api
+  - Status: Atualizado para Fase 3
+
+- **fcg-payments-api**: Processamento com MongoDB + Redis
+  - Repo: https://github.com/laviniaptrabuco/fcg-payments-api
+  - Status: Atualizado para Fase 3
+
+- **fcg-orchestration**: Orquestração + Event Sourcing em MongoDB
+  - Repo: https://github.com/laviniaptrabuco/fcg-orchestration
+  - Status: Atualizado para Fase 3
+
+- **fcg-notifications-serverless**: Azure Function (substitui NotificationsAPI)
+  - Repo: https://github.com/laviniaptrabuco/fcg-notifications-api
+  - Status: Migrada para Serverless
+  - Trigger: RabbitMQ queue
+
+**Todos incluem:**
+- ✅ Prometheus metrics (/metrics endpoint)
+- ✅ MongoDB integração
+- ✅ Redis cache
+- ✅ Health check (/health endpoint)
 
 ## 🔐 Segurança
 
@@ -132,18 +158,26 @@ public async Task Run([QueueTrigger("notifications")] string message)
 5. **Notificação:** Azure Function triggered
 6. **Observabilidade:** Grafana mostra toda a jornada
 
-## 📦 Arquivos Importantes
+## 📦 Estrutura do Repositório
 
 ```
 fcg-fase-3/
-├── docker-compose.yml
+├── docker-compose.yml (Kong, Prometheus, Grafana, MongoDB, Redis, RabbitMQ)
 ├── fcg-observability/
-│   ├── prometheus/
-│   ├── grafana/
-│   └── mongodb/
+│   ├── prometheus/ (config + alert rules)
+│   ├── grafana/ (datasources + 5 dashboards)
+│   └── mongodb/ (init script)
 ├── fcg-api-gateway/
+│   ├── README.md
+│   └── setup-routes.sh (automático)
 ├── fcg-notifications-serverless/
-└── [submodules]
+│   ├── host.json
+│   └── src/NotificationFunction.cs
+├── fcg-users-api-exemplo/ (exemplo de implementação)
+├── IMPLEMENTACAO_MICROSERVICOS.md (guia passo-a-passo)
+├── GUIA_TESTES.md (10 testes validados)
+├── RELATORIO_ENTREGA.md (formal)
+└── CHECKLIST.md (progresso)
 ```
 
 ## ✅ Checklist
