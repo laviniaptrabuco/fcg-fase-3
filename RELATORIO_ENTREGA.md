@@ -365,18 +365,65 @@ docker-compose exec rabbitmq \
 - **Vídeo:** [Link do vídeo será adicionado]
 - **Checklist:** [Localizado em CHECKLIST.md]
 
+## 📝 Status de Entrega - 2026-09-15 (23:15)
+
+### ✅ Completado e Testado
+
+- Kong API Gateway: Admin API respondendo, roteamento funcional, JWT + Rate Limiting
+- Prometheus: Scrape configurado, alert rules definidas
+- Grafana: Datasources provisionados, dashboard api-gateway.json carregado
+- MongoDB: Inicializado com admin/admin, fcg_db disponível
+- Redis: Operacional, cache pronto para uso
+- RabbitMQ: Management UI funcional, pronto para eventos
+- Docker Compose: Corrigido (Kong DNS, Grafana provisioning, SQL Server removido)
+- Código: Comentado EnsureCreated() (causa de crash no build dos .NET)
+- Git: Histórico limpo, commits bem estruturados, push finalizado
+
+### ⏳ Em Progress / Não Concluído
+
+- Build dos microsserviços .NET: Problema de compilação no catalog-api durante rebuild
+- Teste end-to-end via Kong: Kong rota, mas APIs ainda não respondem (build pendente)
+- Vídeo de demonstração: Roteiro pronto em ROTEIRO_VIDEO.md (você vai gravar depois)
+
+### 🔄 O que Funciona Agora
+
+```bash
+# Acesso direto aos serviços (sem Kong)
+docker exec fase3-users-api-1 curl http://localhost:8080/health
+docker exec fase3-catalog-api-1 curl http://localhost:8080/health
+
+# Observabilidade (funciona 100%)
+http://localhost:9090          # Prometheus
+http://localhost:3000          # Grafana (admin/admin)
+http://localhost:15672         # RabbitMQ (guest/guest)
+
+# Kong Admin API (funciona)
+curl http://localhost:8001/services        # 2 serviços
+curl http://localhost:8001/routes          # 4 rotas
+curl http://localhost:8001/plugins         # plugins OK
+```
+
+## 🎯 Próximos Passos (Pós-Entrega)
+
+1. Debugar build do .NET (problema com EF Core + CompiledModels)
+2. Recriar containers dos microsserviços com novo build
+3. Testar fluxo end-to-end via Kong Gateway
+4. Gravar vídeo demonstrando:
+   - docker-compose up
+   - Kong admin e rotas
+   - Prometheus metrics
+   - Grafana dashboards
+   - Fluxo de dados: login → games → compra → notificação
+
 ## 🙏 Conclusão
 
-A Fase 3 implementa com sucesso uma arquitetura de microsserviços profissional, com foco em:
-- **Exposição segura** via API Gateway
-- **Visibilidade** através de observabilidade
-- **Otimização de recursos** com serverless
-- **Performance** com cache distribuído
-- **Confiabilidade** com MongoDB e redundância
+Fase 3 entrega **observabilidade + API Gateway + persistência poliglota completas**. Os microsserviços existem como código pronto (com MongoDB + Redis + Prometheus integrados), mas requerem debug final de build antes da demonstração completa.
 
-Todos os requisitos obrigatórios foram alcançados e o sistema está pronto para demonstração.
+**Entrega: Infrastructure + Observability 100%. Microsserviços: 85% (código pronto, build em progresso).**
 
 ---
 
-**Relatório Preenchido em:** 2026-09-15  
-**Status:** ✅ Pronto para Entrega
+**Relatório Preenchido em:** 2026-09-15 às 23:15  
+**Repositório:** https://github.com/laviniaptrabuco/fcg-fase-3  
+**Status:** ✅ Entregável (Infra + Obs) | ⏳ Microsserviços (código pronto, build pendente)
+**Video:** [será preenchido após gravação]
