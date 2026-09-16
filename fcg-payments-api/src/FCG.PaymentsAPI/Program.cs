@@ -15,7 +15,7 @@ var mongoDatabase = mongoClient.GetDatabase("fcg_db");
 builder.Services.AddSingleton(mongoDatabase);
 
 // Prometheus
-builder.Services.AddSingleton(CollectorRegistry.Default);
+builder.Services.AddSingleton(Metrics.DefaultRegistry);
 
 builder.Services.AddMassTransit(x =>
 {

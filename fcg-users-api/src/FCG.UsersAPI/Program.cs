@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using StackExchange.Redis;
 using Prometheus;
+using FCG.Users.Infrastructure.NoSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,8 +34,8 @@ builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = redisConnection;
 });
 
-// Prometheus Metrics
-builder.Services.AddSingleton<ICollectorRegistry>(CollectorRegistry.Default);
+// Repositório NoSQL de perfis (MongoDB + cache-aside em Redis)
+builder.Services.AddScoped<UserProfileRepository>();
 
 var jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException("Jwt:Secret is not configured.");
@@ -102,11 +104,13 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
-    db.Database.EnsureCreated();
-}
+// EF Core EnsureCreated() falha contra SQL Server 2022 (segfault).
+// O banco ja existe no container SQL Server, nao precisa criar aqui.
+// using (var scope = app.Services.CreateScope())
+// {
+//     var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+//     db.Database.EnsureCreated();
+// }
 
 app.UseMiddleware<FCG.UsersAPI.Middleware.ErrorHandlingMiddleware>();
 
@@ -129,22 +133,23 @@ app.MapGet("/health", async (IMongoDatabase mongoDb, IConnectionMultiplexer redi
 {
     try
     {
-        await mongoDb.RunCommandAsync(new { ping = 1 });
-        var pong = await redis.GetDatabase().PingAsync();
+        await mongoDb.RunCommandAsync<BsonDocument>(new BsonDocument("ping", 1));
+        var latency = await redis.GetDatabase().PingAsync();
 
         return Results.Ok(new
         {
             status = "healthy",
             mongodb = "connected",
-            redis = pong.IsNull ? "disconnected" : "connected",
+            redis = "connected",
+            redisLatencyMs = latency.TotalMilliseconds,
             timestamp = DateTime.UtcNow
         });
     }
     catch (Exception ex)
     {
-        return Results.StatusCode(503).WithOpenApi();
+        return Results.Json(new { status = "unhealthy", error = ex.Message }, statusCode: 503);
     }
-});
+}).AllowAnonymous();
 
 app.Run();
 
