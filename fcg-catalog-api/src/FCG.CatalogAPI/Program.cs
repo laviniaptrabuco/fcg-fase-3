@@ -5,6 +5,7 @@ using FCG.Catalog.Infrastructure.Extensions;
 using FCG.Catalog.Infrastructure.Messaging;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -104,6 +105,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.AddControllers();
+
+// Desabilita infer de body em minimal APIs - fix para o erro
+// "Body was inferred but the method does not allow inferred body parameters"
+builder.Services.Configure<ApiBehaviorOptions>(opts =>
+{
+    opts.SuppressInferBindingSourcesForParameters = true;
+});
 
 var app = builder.Build();
 
