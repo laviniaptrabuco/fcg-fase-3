@@ -140,19 +140,15 @@ app.MapControllers();
 app.MapMetrics("/metrics");
 
 // Health check
-app.MapGet("/health", async (IMongoDatabase mongoDb, IConnectionMultiplexer redis) =>
+app.MapGet("/health", async (IMongoDatabase mongoDb) =>
 {
     try
     {
         await mongoDb.RunCommandAsync<BsonDocument>(new BsonDocument("ping", 1));
-        var latency = await redis.GetDatabase().PingAsync();
-
         return Results.Ok(new
         {
             status = "healthy",
             mongodb = "connected",
-            redis = "connected",
-            redisLatencyMs = latency.TotalMilliseconds,
             timestamp = DateTime.UtcNow
         });
     }
