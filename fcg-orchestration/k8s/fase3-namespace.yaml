@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: fcg-fase3
-  labels:
-    project: fcg
-    phase: "3"
