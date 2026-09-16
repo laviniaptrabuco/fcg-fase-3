@@ -1,0 +1,21 @@
+apiVersion: v1
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+
+    providers:
+      - name: 'FCG Dashboards'
+        orgId: 1
+        folder: 'FCG'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          # Os JSONs sao montados aqui pelo docker-compose.
+          path: /var/lib/grafana/dashboards
+          foldersFromFilesStructure: false
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards-provider
+  namespace: fcg-fase3

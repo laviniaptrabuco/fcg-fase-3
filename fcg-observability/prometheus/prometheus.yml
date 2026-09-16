@@ -22,14 +22,17 @@ scrape_configs:
       - targets: ['kong:8001']
     metrics_path: '/metrics'
 
-  - job_name: 'mongodb'
+  # UsersAPI e CatalogAPI expoem /metrics via prometheus-net (UseHttpMetrics()).
+  # Este e o job exigido pelo TC: latencia, contagem de requisicoes e taxa de
+  # erro dos microsservicos (nao apenas do gateway).
+  - job_name: 'microservices'
+    metrics_path: '/metrics'
     static_configs:
-      - targets: ['mongodb:27017']
+      - targets: ['users-api:8080']
+        labels: { service: 'users-api' }
+      - targets: ['catalog-api:8080']
+        labels: { service: 'catalog-api' }
 
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['redis:6379']
-
-  - job_name: 'docker'
-    static_configs:
-      - targets: ['localhost:8080']
+# Nota: mongodb e redis nao expoem /metrics nativamente - exigiriam
+# mongodb_exporter / redis_exporter dedicados, fora do escopo obrigatorio
+# do TC (que pede metricas de UsersAPI e CatalogAPI).

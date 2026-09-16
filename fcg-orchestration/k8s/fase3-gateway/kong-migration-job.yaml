@@ -1,0 +1,25 @@
+# Job que roda as migrations do Kong contra o Postgres antes do Kong subir.
+# Equivalente ao service "kong-migration" do docker-compose.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kong-migration
+  namespace: fcg-fase3
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: kong-migration
+          image: kong:latest
+          command: ["kong", "migrations", "bootstrap"]
+          env:
+            - name: KONG_DATABASE
+              value: postgres
+            - name: KONG_PG_HOST
+              value: kong-database
+            - name: KONG_PG_USER
+              value: kong
+            - name: KONG_PG_PASSWORD
+              value: kong

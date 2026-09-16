@@ -2,8 +2,11 @@ groups:
   - name: fcg_alerts
     interval: 30s
     rules:
+      # http_requests_total e http_request_duration_seconds_bucket vem do
+      # UseHttpMetrics() do prometheus-net, exposto em /metrics pelo
+      # users-api e catalog-api (job "microservices" no scrape config).
       - alert: HighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        expr: rate(http_requests_total{code=~"5.."}[5m]) > 0.05
         for: 5m
         labels:
           severity: critical
@@ -20,18 +23,10 @@ groups:
           summary: "Latência alta detectada"
           description: "P95 latência: {{ $value }}s"
 
-      - alert: MongoDBDown
-        expr: up{job="mongodb"} == 0
+      - alert: ServiceDown
+        expr: up{job=~"microservices|kong"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "MongoDB não está respondendo"
-
-      - alert: RedisDown
-        expr: up{job="redis"} == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Redis não está respondendo"
+          summary: "Serviço {{ $labels.instance }} não está respondendo"
