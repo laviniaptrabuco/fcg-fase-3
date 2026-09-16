@@ -42,10 +42,11 @@ upsert_service "catalog-api" "http://catalog-api:8080"
 
 echo ""
 echo "=========== ROTAS ==========="
-upsert_route "users-route"   "users-api"   "/api/users"
-upsert_route "auth-route"    "users-api"   "/api/auth"
-upsert_route "catalog-route" "catalog-api" "/api/catalog"
-upsert_route "games-route"   "catalog-api" "/api/games"
+upsert_route "users-route"    "users-api"   "/api/users"
+upsert_route "auth-route"     "users-api"   "/api/auth"
+upsert_route "profiles-route" "users-api"   "/api/profiles"
+upsert_route "catalog-route"  "catalog-api" "/api/catalog"
+upsert_route "games-route"    "catalog-api" "/api/games"
 
 echo ""
 echo "=========== PLUGINS ==========="
@@ -78,15 +79,20 @@ echo "=========== CONSUMER ==========="
 curl -sf -X PUT "$KONG_ADMIN/consumers/$CONSUMER_NAME" > /dev/null 2>&1 \
   && ok "consumer '$CONSUMER_NAME'" || info "consumer ja existe"
 
-JWT_RESPONSE=$(curl -s -X POST "$KONG_ADMIN/consumers/$CONSUMER_NAME/jwt" -d "algorithm=HS256")
-JWT_KEY=$(echo "$JWT_RESPONSE"    | grep -o '"key":"[^"]*'    | cut -d'"' -f4)
-JWT_SECRET=$(echo "$JWT_RESPONSE" | grep -o '"secret":"[^"]*' | cut -d'"' -f4)
+# O plugin JWT do Kong usa o claim "iss" do token para achar a credencial
+# a validar. O users-api gera tokens com iss=FiapCloudGames (appsettings.json),
+# entao a credencial precisa usar exatamente esse valor como "key" e o
+# MESMO secret usado pela API para assinar - assim o Kong valida os tokens
+# reais emitidos pelo /api/auth/login, em vez de exigir um token proprio do Kong.
+JWT_ISSUER="FiapCloudGames"
+JWT_APP_SECRET="FCG_SUPER_SECRET_KEY_CHANGE_IN_PRODUCTION_32CHARS!"
 
-if [ -n "$JWT_KEY" ]; then
-    ok "credencial JWT criada"
-    echo "     key:    $JWT_KEY"
-    echo "     secret: $JWT_SECRET"
-fi
+curl -sf -X POST "$KONG_ADMIN/consumers/$CONSUMER_NAME/jwt" \
+  -d "key=$JWT_ISSUER" \
+  -d "algorithm=HS256" \
+  -d "secret=$JWT_APP_SECRET" > /dev/null 2>&1 \
+  && ok "credencial JWT criada (key=$JWT_ISSUER, mesmo secret da API)" \
+  || info "credencial JWT ja configurada para $JWT_ISSUER"
 
 echo ""
 echo "=========== VERIFICACAO ==========="

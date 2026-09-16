@@ -2,11 +2,11 @@ groups:
   - name: fcg_alerts
     interval: 30s
     rules:
-      # http_requests_total e http_request_duration_seconds_bucket vem do
+      # http_requests_received_total e http_request_duration_seconds_bucket vem do
       # UseHttpMetrics() do prometheus-net, exposto em /metrics pelo
       # users-api e catalog-api (job "microservices" no scrape config).
       - alert: HighErrorRate
-        expr: rate(http_requests_total{code=~"5.."}[5m]) > 0.05
+        expr: rate(http_requests_received_total{code=~"5.."}[5m]) > 0.05
         for: 5m
         labels:
           severity: critical

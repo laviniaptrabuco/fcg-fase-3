@@ -16,7 +16,7 @@ spec:
       containers:
         - name: payments-api
           image: fcg-payments-api:fase3
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: Development

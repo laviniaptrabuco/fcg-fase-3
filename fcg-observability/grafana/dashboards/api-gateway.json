@@ -17,7 +17,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total[1m])) by (service)",
+          "expr": "sum(rate(http_requests_received_total[1m])) by (service)",
           "legendFormat": "{{service}}"
         }
       ]
@@ -30,7 +30,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_total[1m])) by (code)",
+          "expr": "sum(rate(http_requests_received_total[1m])) by (code)",
           "legendFormat": "HTTP {{code}}"
         }
       ]
@@ -57,7 +57,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "targets": [
         {
-          "expr": "100 * sum(rate(http_requests_total{code=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))",
+          "expr": "100 * sum(rate(http_requests_received_total{code=~\"5..\"}[5m])) / sum(rate(http_requests_received_total[5m]))",
           "legendFormat": "error rate %"
         }
       ],
@@ -82,7 +82,7 @@
       "datasource": { "type": "prometheus", "uid": "Prometheus" },
       "gridPos": { "h": 6, "w": 8, "x": 0, "y": 16 },
       "targets": [
-        { "expr": "sum(http_requests_total)", "legendFormat": "total" }
+        { "expr": "sum(http_requests_received_total)", "legendFormat": "total" }
       ]
     },
     {

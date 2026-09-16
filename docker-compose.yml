@@ -160,19 +160,49 @@
     networks:
       - fcg-network
 
-  # Microsservicos - Fase 3 usa MongoDB + Redis, nao SQL Server
-  # localhost, que dentro do container aponta para o proprio container.
-  # Por isso sao sobrescritas aqui com os nomes de servico do compose.
+  # SQL Server - dados centrais herdados da Fase 2 (usuarios, catalogo de
+  # jogos). MongoDB guarda dados expandidos (perfis, reviews) e Redis faz
+  # cache: as tres juntas sao a persistencia poliglota da Fase 3.
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "FCG_Dev@2024"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      # Login real, nao so a porta TCP: o SQL Server aceita conexao TCP
+      # bem antes de estar pronto para autenticar, e login falho ativa o
+      # PoolBlockingPeriod do SqlClient no app (bloqueia novas tentativas
+      # por um tempo mesmo depois do banco ficar disponivel).
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 20s
+    networks:
+      - fcg-network
+
+  # Microsservicos - appsettings.Development.json sobrescreve
+  # DefaultConnection/RabbitMQ:Host para "localhost"; as env vars abaixo
+  # tem prioridade sobre qualquer appsettings*.json e corrigem para os
+  # nomes de servico do compose.
   users-api:
     restart: on-failure:10
     image: fcg-users-api:fase3
     build: ./fcg-users-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=FCG_Users;User Id=SA;Password=FCG_Dev@2024;TrustServerCertificate=True;"
       ConnectionStrings__MongoDB: "mongodb://admin:admin@mongodb:27017"
       ConnectionStrings__Redis: "redis:6379"
       RabbitMQ__Host: rabbitmq
     depends_on:
+      sqlserver:
+        condition: service_healthy
       mongodb:
         condition: service_started
       redis:
@@ -188,10 +218,13 @@
     build: ./fcg-catalog-api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=FCG_Catalog;User Id=SA;Password=FCG_Dev@2024;TrustServerCertificate=True;"
       ConnectionStrings__MongoDB: "mongodb://admin:admin@mongodb:27017"
       ConnectionStrings__Redis: "redis:6379"
       RabbitMQ__Host: rabbitmq
     depends_on:
+      sqlserver:
+        condition: service_healthy
       mongodb:
         condition: service_started
       redis:
@@ -208,7 +241,6 @@
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__MongoDB: "mongodb://admin:admin@mongodb:27017"
-      ConnectionStrings__Redis: "redis:6379"
       RabbitMQ__Host: rabbitmq
     depends_on:
       mongodb:
@@ -220,6 +252,7 @@
 
 volumes:
   kong-db-data:
+  sqlserver-data:
   prometheus-data:
   grafana-data:
   mongodb-data:

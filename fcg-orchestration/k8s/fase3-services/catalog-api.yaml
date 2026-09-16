@@ -11,14 +11,33 @@ spec:
     metadata:
       labels: { app: catalog-api }
     spec:
+      initContainers:
+        - name: wait-for-sqlserver
+          # Testa LOGIN real, nao so a porta TCP: o SQL Server aceita
+          # conexoes TCP bem antes de estar pronto para autenticar, e
+          # tentativas de login falhas do app disparam o PoolBlockingPeriod
+          # do SqlClient (bloqueia novas tentativas por um tempo mesmo
+          # depois do banco ficar disponivel).
+          image: mcr.microsoft.com/mssql-tools
+          command:
+            - /bin/sh
+            - -c
+            - >
+              until /opt/mssql-tools/bin/sqlcmd -S sqlserver -U SA -P "FCG_Dev@2024" -Q "SELECT 1";
+              do echo aguardando login no sqlserver...; sleep 3; done
       containers:
         - name: catalog-api
           image: fcg-catalog-api:fase3
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports: [{ containerPort: 8080 }]
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: Development
+            # appsettings.Development.json sobrescreve DefaultConnection
+            # para "localhost,1433" - variavel de ambiente corrige para o
+            # nome do Service.
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=FCG_Catalog;User Id=SA;Password=FCG_Dev@2024;TrustServerCertificate=True;"
             - name: ConnectionStrings__MongoDB
               value: "mongodb://admin:admin@mongodb:27017"
             - name: ConnectionStrings__Redis

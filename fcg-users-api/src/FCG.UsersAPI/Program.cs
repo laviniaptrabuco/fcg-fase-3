@@ -112,13 +112,30 @@ builder.Services.Configure<ApiBehaviorOptions>(opts =>
 
 var app = builder.Build();
 
-// EF Core EnsureCreated() falha contra SQL Server 2022 (segfault).
-// O banco ja existe no container SQL Server, nao precisa criar aqui.
-// using (var scope = app.Services.CreateScope())
-// {
-//     var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
-//     db.Database.EnsureCreated();
-// }
+// EnsureCreated() com retry: o container do SQL Server pode estar de pe
+// (porta aceitando TCP) mas ainda inicializando internamente, o que
+// derruba a primeira tentativa de conexao. O K8s/compose ja aguardam o
+// healthcheck do banco antes de iniciar este container, mas isso da uma
+// segunda camada de seguranca contra esse tipo de corrida.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    const int maxAttempts = 8;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            db.Database.EnsureCreated();
+            break;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Falha ao criar/verificar o banco (tentativa {Attempt}/{Max})", attempt, maxAttempts);
+            if (attempt < maxAttempts) Thread.Sleep(5000);
+        }
+    }
+}
 
 app.UseMiddleware<FCG.UsersAPI.Middleware.ErrorHandlingMiddleware>();
 
